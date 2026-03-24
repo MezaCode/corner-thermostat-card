@@ -34,6 +34,7 @@ class CornerThermostatCard extends HTMLElement {
           .current {
             font-size: 72px;
             font-weight: 600;
+            letter-spacing: 2px;
           }
 
           .target {
@@ -56,61 +57,99 @@ class CornerThermostatCard extends HTMLElement {
             font-size: 30px;
             color: white;
             background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(6px);
+            box-shadow:
+              inset 0 2px 4px rgba(255,255,255,0.05),
+              0 4px 10px rgba(0,0,0,0.5);
+            transition: all 0.2s ease;
+          }
+
+          button:active {
+            transform: scale(0.92);
           }
 
           .corner {
             position: absolute;
-            font-size: 32px;
             opacity: 0.45;
             cursor: pointer;
+            transition: all 0.25s ease;
+          }
+
+          .corner ha-icon {
+            width: 28px;
+            height: 28px;
           }
 
           .corner.active {
             opacity: 1;
-            transform: scale(1.1);
+            transform: scale(1.15);
           }
 
+          /* POSITIONS */
           .power { top: 18px; left: 18px; }
           .cool { top: 18px; right: 18px; }
           .heat { bottom: 18px; left: 18px; }
           .fan { bottom: 18px; right: 18px; }
 
-          .cool.active {
+          /* GLOW EFFECTS */
+          .cool.active ha-icon {
             color: #5ab0ff;
-            text-shadow: 0 0 10px rgba(90,176,255,0.7);
+            filter: drop-shadow(0 0 6px rgba(90,176,255,0.7))
+                    drop-shadow(0 0 12px rgba(90,176,255,0.4));
           }
 
-          .heat.active {
+          .heat.active ha-icon {
             color: #ff6a5a;
-            text-shadow: 0 0 10px rgba(255,106,90,0.7);
+            filter: drop-shadow(0 0 6px rgba(255,106,90,0.7))
+                    drop-shadow(0 0 12px rgba(255,106,90,0.4));
           }
 
-          .fan.active {
+          .fan.active ha-icon {
             color: #7dffb3;
-            text-shadow: 0 0 10px rgba(125,255,179,0.7);
+            filter: drop-shadow(0 0 6px rgba(125,255,179,0.7))
+                    drop-shadow(0 0 12px rgba(125,255,179,0.4));
           }
 
-          .power.active {
-            color: #fff;
-            text-shadow: 0 0 8px rgba(255,255,255,0.6);
+          .power.active ha-icon {
+            color: #ffffff;
+            filter: drop-shadow(0 0 6px rgba(255,255,255,0.6));
           }
         </style>
 
         <div class="container">
 
-          <div class="corner power ${hvacMode === 'off' ? 'active' : ''}" id="power">⏻</div>
-          <div class="corner cool ${hvacMode === 'cool' ? 'active' : ''}" id="cool">❄</div>
-          <div class="corner heat ${hvacMode === 'heat' ? 'active' : ''}" id="heat">🔥</div>
-          <div class="corner fan ${fanMode === 'on' ? 'active' : ''}" id="fan">🌀</div>
+          <!-- CORNER ICONS -->
+          <div class="corner power ${hvacMode === 'off' ? 'active' : ''}" id="power">
+            <ha-icon icon="mdi:power"></ha-icon>
+          </div>
 
-          <div class="current">${currentTemp ?? '--'}°</div>
+          <div class="corner cool ${hvacMode === 'cool' ? 'active' : ''}" id="cool">
+            <ha-icon icon="mdi:snowflake"></ha-icon>
+          </div>
 
+          <div class="corner heat ${hvacMode === 'heat' ? 'active' : ''}" id="heat">
+            <ha-icon icon="mdi:fire"></ha-icon>
+          </div>
+
+          <div class="corner fan ${fanMode === 'on' ? 'active' : ''}" id="fan">
+            <ha-icon icon="mdi:fan"></ha-icon>
+          </div>
+
+          <!-- CURRENT TEMP -->
+          <div class="current">
+            ${currentTemp ?? '--'}°
+          </div>
+
+          <!-- CONTROLS -->
           <div class="controls">
             <button id="minus">–</button>
             <button id="plus">+</button>
           </div>
 
-          <div class="target">${targetTemp ?? '--'}°</div>
+          <!-- TARGET TEMP -->
+          <div class="target">
+            ${targetTemp ?? '--'}°
+          </div>
 
         </div>
       </ha-card>
