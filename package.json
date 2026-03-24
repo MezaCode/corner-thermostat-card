@@ -1,0 +1,9 @@
+{
+  "name": "corner-thermostat-card",
+  "version": "1.0.0",
+  "description": "Custom Home Assistant thermostat card with corner controls",
+  "main": "dist/corner-thermostat-card.js",
+  "keywords": ["home-assistant", "lovelace", "thermostat"],
+  "author": "",
+  "license": "MIT"
+}
