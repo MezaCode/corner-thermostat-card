@@ -3,23 +3,42 @@ class CornerThermostatCard extends HTMLElement {
     if (!config.entity) {
       throw new Error("You need to define a climate entity");
     }
-    this.config = config;
+
+    this.config = {
+      bg_color: "#1a1a1a",
+      bg_opacity: 1,
+      cool_color: "#5ab0ff",
+      heat_color: "#ff6a5a",
+      fan_color: "#7dffb3",
+      power_color: "#ffffff",
+      theme: "",
+      ...config
+    };
   }
 
   static getConfigElement() {
     return document.createElement("corner-thermostat-card-editor");
   }
 
-  static getStubConfig() {
-    return {
-      entity: "climate.your_thermostat"
-    };
+  static getStubConfig(hass) {
+    const entity = Object.keys(hass.states).find(e =>
+      e.startsWith("climate.")
+    );
+    return { entity: entity || "" };
   }
 
   set hass(hass) {
     this._hass = hass;
-    const stateObj = hass.states[this.config.entity];
+    this._render();
+  }
+
+  _render() {
+    if (!this._hass || !this.config) return;
+
+    const stateObj = this._hass.states[this.config.entity];
     if (!stateObj) return;
+
+    const c = this.config;
 
     const currentTemp = stateObj.attributes.current_temperature;
     const targetTemp = stateObj.attributes.temperature;
@@ -27,14 +46,14 @@ class CornerThermostatCard extends HTMLElement {
     const fanMode = stateObj.attributes.fan_mode;
 
     this.innerHTML = `
-      <ha-card>
+      <ha-card ${c.theme ? `data-theme="${c.theme}"` : ""}>
         <style>
           .container {
             position: relative;
             height: 400px;
-            background: radial-gradient(circle at center, #1a1a1a 0%, #0f0f0f 100%);
+            background: rgba(${this._hexToRgb(c.bg_color)}, ${c.bg_opacity});
             border-radius: 24px;
-            color: #eaeaea;
+            color: var(--primary-text-color, #eaeaea);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -64,7 +83,7 @@ class CornerThermostatCard extends HTMLElement {
             border-radius: 50%;
             border: none;
             font-size: 30px;
-            color: white;
+            color: var(--primary-text-color);
             background: rgba(255,255,255,0.06);
           }
 
@@ -90,23 +109,23 @@ class CornerThermostatCard extends HTMLElement {
           .fan { bottom: 18px; right: 18px; }
 
           .cool.active ha-icon {
-            color: #5ab0ff;
-            filter: drop-shadow(0 0 6px rgba(90,176,255,0.7));
+            color: ${c.cool_color};
+            filter: drop-shadow(0 0 6px ${c.cool_color});
           }
 
           .heat.active ha-icon {
-            color: #ff6a5a;
-            filter: drop-shadow(0 0 6px rgba(255,106,90,0.7));
+            color: ${c.heat_color};
+            filter: drop-shadow(0 0 6px ${c.heat_color});
           }
 
           .fan.active ha-icon {
-            color: #7dffb3;
-            filter: drop-shadow(0 0 6px rgba(125,255,179,0.7));
+            color: ${c.fan_color};
+            filter: drop-shadow(0 0 6px ${c.fan_color});
           }
 
           .power.active ha-icon {
-            color: #ffffff;
-            filter: drop-shadow(0 0 6px rgba(255,255,255,0.6));
+            color: ${c.power_color};
+            filter: drop-shadow(0 0 6px ${c.power_color});
           }
         </style>
 
@@ -140,6 +159,11 @@ class CornerThermostatCard extends HTMLElement {
     `;
 
     this._bindActions(stateObj);
+  }
+
+  _hexToRgb(hex) {
+    const bigint = parseInt(hex.replace("#", ""), 16);
+    return `${(bigint >> 16) & 255}, ${(bigint >> 8) & 255}, ${bigint & 255}`;
   }
 
   _bindActions(stateObj) {
@@ -197,11 +221,14 @@ customElements.define("corner-thermostat-card", CornerThermostatCard);
 class CornerThermostatCardEditor extends HTMLElement {
   setConfig(config) {
     this.config = config;
+    this._updatePreview();
     this.render();
   }
 
   set hass(hass) {
     this._hass = hass;
+    this._updatePreview();
+    this.render();
   }
 
   render() {
@@ -210,25 +237,91 @@ class CornerThermostatCardEditor extends HTMLElement {
     const entities = Object.keys(this._hass.states)
       .filter(e => e.startsWith("climate."));
 
+    const themes = this._hass.themes?.themes || {};
+    const themeNames = Object.keys(themes);
+
     this.innerHTML = `
-      <div style="padding: 16px;">
-        <label>Climate Entity:</label>
-        <select id="entity">
-          ${entities.map(e => `
-            <option value="${e}" ${this.config.entity === e ? "selected" : ""}>
-              ${e}
-            </option>
-          `).join("")}
-        </select>
+      <div style="display:flex; gap:20px;">
+        
+        <div style="flex:1; display:flex; flex-direction:column; gap:10px;">
+
+          <label>Climate Entity</label>
+          <select id="entity">
+            ${entities.map(e => `<option value="${e}" ${this.config.entity === e ? "selected" : ""}>${e}</option>`).join("")}
+          </select>
+
+          <label>Theme</label>
+          <select id="theme">
+            <option value="">None</option>
+            ${themeNames.map(name => `<option value="${name}" ${this.config.theme === name ? "selected" : ""}>${name}</option>`).join("")}
+          </select>
+
+          <label>Background Color</label>
+          <input type="color" id="bg_color" value="${this.config.bg_color || "#1a1a1a"}">
+
+          <label>Background Opacity</label>
+          <input type="range" min="0" max="1" step="0.05" id="bg_opacity" value="${this.config.bg_opacity ?? 1}">
+
+          <label>Cool Color</label>
+          <input type="color" id="cool_color" value="${this.config.cool_color || "#5ab0ff"}">
+
+          <label>Heat Color</label>
+          <input type="color" id="heat_color" value="${this.config.heat_color || "#ff6a5a"}">
+
+          <label>Fan Color</label>
+          <input type="color" id="fan_color" value="${this.config.fan_color || "#7dffb3"}">
+
+          <label>Power Color</label>
+          <input type="color" id="power_color" value="${this.config.power_color || "#ffffff"}">
+        </div>
+
+        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+          <div id="preview"></div>
+        </div>
+
       </div>
     `;
 
-    this.querySelector("#entity").addEventListener("change", (e) => {
-      this.config.entity = e.target.value;
-      this.dispatchEvent(new CustomEvent("config-changed", {
-        detail: { config: this.config }
-      }));
+    this.querySelectorAll("input, select").forEach(el => {
+      el.addEventListener("change", () => {
+        this.config = {
+          ...this.config,
+          entity: this.querySelector("#entity").value,
+          theme: this.querySelector("#theme").value,
+          bg_color: this.querySelector("#bg_color").value,
+          bg_opacity: parseFloat(this.querySelector("#bg_opacity").value),
+          cool_color: this.querySelector("#cool_color").value,
+          heat_color: this.querySelector("#heat_color").value,
+          fan_color: this.querySelector("#fan_color").value,
+          power_color: this.querySelector("#power_color").value
+        };
+
+        this.dispatchEvent(new CustomEvent("config-changed", {
+          detail: { config: this.config },
+          bubbles: true,
+          composed: true
+        }));
+
+        this._updatePreview();
+      });
     });
+
+    this._updatePreview();
+  }
+
+  _updatePreview() {
+    if (!this._hass || !this.config) return;
+
+    const preview = this.querySelector("#preview");
+    if (!preview) return;
+
+    preview.innerHTML = "";
+
+    const card = document.createElement("corner-thermostat-card");
+    card.setConfig(this.config);
+    card.hass = this._hass;
+
+    preview.appendChild(card);
   }
 }
 
@@ -238,5 +331,5 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "corner-thermostat-card",
   name: "Corner Thermostat Card",
-  description: "Thermostat card with corner controls"
+  description: "Custom thermostat with live preview + theme support"
 });
