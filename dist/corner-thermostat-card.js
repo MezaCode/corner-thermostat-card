@@ -1,9 +1,5 @@
 class CornerThermostatCard extends HTMLElement {
   setConfig(config) {
-    if (!config.entity) {
-      throw new Error("You need to define a climate entity");
-    }
-
     this.config = {
       bg_color: "#1a1a1a",
       bg_opacity: 1,
@@ -33,7 +29,7 @@ class CornerThermostatCard extends HTMLElement {
   }
 
   _render() {
-    if (!this._hass || !this.config) return;
+    if (!this._hass || !this.config || !this.config.entity) return;
 
     const stateObj = this._hass.states[this.config.entity];
     if (!stateObj) return;
@@ -162,9 +158,20 @@ class CornerThermostatCard extends HTMLElement {
 customElements.define("corner-thermostat-card", CornerThermostatCard);
 
 
+
 class CornerThermostatCardEditor extends HTMLElement {
+  constructor() {
+    super();
+    this.config = {};
+  }
+
   setConfig(config) {
-    this.config = { ...config };
+    this.config = {
+      bg_color: "#1a1a1a",
+      bg_opacity: 1,
+      theme: "",
+      ...config
+    };
     this._render();
   }
 
@@ -174,48 +181,49 @@ class CornerThermostatCardEditor extends HTMLElement {
   }
 
   _render() {
-    if (!this._hass || !this.config) return;
+    if (!this._hass) return;
 
-    if (!this._initialized) {
-      this.innerHTML = `
-        <div style="display:flex; gap:20px;">
-          <div id="form" style="flex:1;"></div>
-          <div id="preview" style="flex:1;"></div>
-        </div>
-      `;
-      this._initialized = true;
-    }
+    if (!this.config) this.config = {};
 
-    this._renderForm();
-    this._updatePreview();
-  }
-
-  _renderForm() {
     const entities = Object.keys(this._hass.states)
       .filter(e => e.startsWith("climate."));
 
     const themes = this._hass.themes?.themes || {};
     const themeNames = Object.keys(themes);
 
-    this.querySelector("#form").innerHTML = `
-      <div style="display:flex; flex-direction:column; gap:10px;">
-        <select id="entity">
-          ${entities.map(e => `<option value="${e}" ${this.config.entity === e ? "selected" : ""}>${e}</option>`).join("")}
-        </select>
+    this.innerHTML = `
+      <div style="display:flex; gap:20px;">
+        
+        <div style="flex:1; display:flex; flex-direction:column; gap:10px;">
 
-        <select id="theme">
-          <option value="">None</option>
-          ${themeNames.map(t => `<option value="${t}" ${this.config.theme === t ? "selected" : ""}>${t}</option>`).join("")}
-        </select>
+          <label>Climate Entity</label>
+          <select id="entity">
+            ${entities.map(e => `<option value="${e}" ${this.config.entity === e ? "selected" : ""}>${e}</option>`).join("")}
+          </select>
 
-        <input type="color" id="bg_color" value="${this.config.bg_color}">
-        <input type="range" min="0" max="1" step="0.05" id="bg_opacity" value="${this.config.bg_opacity}">
+          <label>Theme</label>
+          <select id="theme">
+            <option value="">None</option>
+            ${themeNames.map(t => `<option value="${t}" ${this.config.theme === t ? "selected" : ""}>${t}</option>`).join("")}
+          </select>
+
+          <label>Background</label>
+          <input type="color" id="bg_color" value="${this.config.bg_color || "#1a1a1a"}">
+
+          <label>Opacity</label>
+          <input type="range" min="0" max="1" step="0.05" id="bg_opacity" value="${this.config.bg_opacity ?? 1}">
+        </div>
+
+        <div style="flex:1;" id="preview"></div>
+
       </div>
     `;
 
-    this.querySelectorAll("#form input, #form select").forEach(el => {
+    this.querySelectorAll("input, select").forEach(el => {
       el.addEventListener("change", () => this._handleChange());
     });
+
+    this._updatePreview();
   }
 
   _handleChange() {
@@ -237,7 +245,11 @@ class CornerThermostatCardEditor extends HTMLElement {
   }
 
   _updatePreview() {
+    if (!this._hass || !this.config.entity) return;
+
     const preview = this.querySelector("#preview");
+    if (!preview) return;
+
     preview.innerHTML = "";
 
     const card = document.createElement("corner-thermostat-card");
@@ -255,5 +267,5 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "corner-thermostat-card",
   name: "Corner Thermostat Card",
-  description: "Thermostat with live preview + working editor"
+  description: "Thermostat with working editor + preview"
 });
