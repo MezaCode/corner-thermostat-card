@@ -6,6 +6,16 @@ class CornerThermostatCard extends HTMLElement {
     this.config = config;
   }
 
+  static getConfigElement() {
+    return document.createElement("corner-thermostat-card-editor");
+  }
+
+  static getStubConfig() {
+    return {
+      entity: "climate.your_thermostat"
+    };
+  }
+
   set hass(hass) {
     this._hass = hass;
     const stateObj = hass.states[this.config.entity];
@@ -34,7 +44,6 @@ class CornerThermostatCard extends HTMLElement {
           .current {
             font-size: 72px;
             font-weight: 600;
-            letter-spacing: 2px;
           }
 
           .target {
@@ -57,22 +66,12 @@ class CornerThermostatCard extends HTMLElement {
             font-size: 30px;
             color: white;
             background: rgba(255,255,255,0.06);
-            backdrop-filter: blur(6px);
-            box-shadow:
-              inset 0 2px 4px rgba(255,255,255,0.05),
-              0 4px 10px rgba(0,0,0,0.5);
-            transition: all 0.2s ease;
-          }
-
-          button:active {
-            transform: scale(0.92);
           }
 
           .corner {
             position: absolute;
             opacity: 0.45;
             cursor: pointer;
-            transition: all 0.25s ease;
           }
 
           .corner ha-icon {
@@ -85,29 +84,24 @@ class CornerThermostatCard extends HTMLElement {
             transform: scale(1.15);
           }
 
-          /* POSITIONS */
           .power { top: 18px; left: 18px; }
           .cool { top: 18px; right: 18px; }
           .heat { bottom: 18px; left: 18px; }
           .fan { bottom: 18px; right: 18px; }
 
-          /* GLOW EFFECTS */
           .cool.active ha-icon {
             color: #5ab0ff;
-            filter: drop-shadow(0 0 6px rgba(90,176,255,0.7))
-                    drop-shadow(0 0 12px rgba(90,176,255,0.4));
+            filter: drop-shadow(0 0 6px rgba(90,176,255,0.7));
           }
 
           .heat.active ha-icon {
             color: #ff6a5a;
-            filter: drop-shadow(0 0 6px rgba(255,106,90,0.7))
-                    drop-shadow(0 0 12px rgba(255,106,90,0.4));
+            filter: drop-shadow(0 0 6px rgba(255,106,90,0.7));
           }
 
           .fan.active ha-icon {
             color: #7dffb3;
-            filter: drop-shadow(0 0 6px rgba(125,255,179,0.7))
-                    drop-shadow(0 0 12px rgba(125,255,179,0.4));
+            filter: drop-shadow(0 0 6px rgba(125,255,179,0.7));
           }
 
           .power.active ha-icon {
@@ -117,8 +111,6 @@ class CornerThermostatCard extends HTMLElement {
         </style>
 
         <div class="container">
-
-          <!-- CORNER ICONS -->
           <div class="corner power ${hvacMode === 'off' ? 'active' : ''}" id="power">
             <ha-icon icon="mdi:power"></ha-icon>
           </div>
@@ -135,22 +127,14 @@ class CornerThermostatCard extends HTMLElement {
             <ha-icon icon="mdi:fan"></ha-icon>
           </div>
 
-          <!-- CURRENT TEMP -->
-          <div class="current">
-            ${currentTemp ?? '--'}°
-          </div>
+          <div class="current">${currentTemp ?? '--'}°</div>
 
-          <!-- CONTROLS -->
           <div class="controls">
             <button id="minus">–</button>
             <button id="plus">+</button>
           </div>
 
-          <!-- TARGET TEMP -->
-          <div class="target">
-            ${targetTemp ?? '--'}°
-          </div>
-
+          <div class="target">${targetTemp ?? '--'}°</div>
         </div>
       </ha-card>
     `;
@@ -209,3 +193,50 @@ class CornerThermostatCard extends HTMLElement {
 }
 
 customElements.define("corner-thermostat-card", CornerThermostatCard);
+
+class CornerThermostatCardEditor extends HTMLElement {
+  setConfig(config) {
+    this.config = config;
+    this.render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+  }
+
+  render() {
+    if (!this._hass) return;
+
+    const entities = Object.keys(this._hass.states)
+      .filter(e => e.startsWith("climate."));
+
+    this.innerHTML = `
+      <div style="padding: 16px;">
+        <label>Climate Entity:</label>
+        <select id="entity">
+          ${entities.map(e => `
+            <option value="${e}" ${this.config.entity === e ? "selected" : ""}>
+              ${e}
+            </option>
+          `).join("")}
+        </select>
+      </div>
+    `;
+
+    this.querySelector("#entity").addEventListener("change", (e) => {
+      this.config.entity = e.target.value;
+      this.dispatchEvent(new CustomEvent("config-changed", {
+        detail: { config: this.config }
+      }));
+    });
+  }
+}
+
+customElements.define("corner-thermostat-card-editor", CornerThermostatCardEditor);
+
+window.customCards = window.customCards || [];
+window.customCards.push({
+  type: "corner-thermostat-card",
+  name: "Corner Thermostat Card",
+  description: "Thermostat card with corner controls"
+});
