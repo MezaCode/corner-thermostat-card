@@ -18,40 +18,99 @@ class CornerThermostatCard extends HTMLElement {
 
     this.innerHTML = `
       <ha-card>
+        <style>
+          .container {
+            position: relative;
+            height: 400px;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #0f0f0f 100%);
+            border-radius: 24px;
+            color: #eaeaea;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .current {
+            font-size: 72px;
+            font-weight: 600;
+          }
+
+          .target {
+            font-size: 34px;
+            opacity: 0.75;
+            margin-top: 18px;
+          }
+
+          .controls {
+            display: flex;
+            gap: 50px;
+            margin-top: 20px;
+          }
+
+          button {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            border: none;
+            font-size: 30px;
+            color: white;
+            background: rgba(255,255,255,0.06);
+          }
+
+          .corner {
+            position: absolute;
+            font-size: 32px;
+            opacity: 0.45;
+            cursor: pointer;
+          }
+
+          .corner.active {
+            opacity: 1;
+            transform: scale(1.1);
+          }
+
+          .power { top: 18px; left: 18px; }
+          .cool { top: 18px; right: 18px; }
+          .heat { bottom: 18px; left: 18px; }
+          .fan { bottom: 18px; right: 18px; }
+
+          .cool.active {
+            color: #5ab0ff;
+            text-shadow: 0 0 10px rgba(90,176,255,0.7);
+          }
+
+          .heat.active {
+            color: #ff6a5a;
+            text-shadow: 0 0 10px rgba(255,106,90,0.7);
+          }
+
+          .fan.active {
+            color: #7dffb3;
+            text-shadow: 0 0 10px rgba(125,255,179,0.7);
+          }
+
+          .power.active {
+            color: #fff;
+            text-shadow: 0 0 8px rgba(255,255,255,0.6);
+          }
+        </style>
+
         <div class="container">
 
-          <!-- CORNERS -->
-          <div class="corner power ${hvacMode === 'off' ? 'active' : ''}" id="power">
-            ⏻
-          </div>
+          <div class="corner power ${hvacMode === 'off' ? 'active' : ''}" id="power">⏻</div>
+          <div class="corner cool ${hvacMode === 'cool' ? 'active' : ''}" id="cool">❄</div>
+          <div class="corner heat ${hvacMode === 'heat' ? 'active' : ''}" id="heat">🔥</div>
+          <div class="corner fan ${fanMode === 'on' ? 'active' : ''}" id="fan">🌀</div>
 
-          <div class="corner cool ${hvacMode === 'cool' ? 'active' : ''}" id="cool">
-            ❄
-          </div>
+          <div class="current">${currentTemp ?? '--'}°</div>
 
-          <div class="corner heat ${hvacMode === 'heat' ? 'active' : ''}" id="heat">
-            🔥
-          </div>
-
-          <div class="corner fan ${fanMode === 'on' ? 'active' : ''}" id="fan">
-            🌀
-          </div>
-
-          <!-- CURRENT TEMP -->
-          <div class="current">
-            ${currentTemp ?? '--'}°
-          </div>
-
-          <!-- CONTROLS -->
           <div class="controls">
             <button id="minus">–</button>
             <button id="plus">+</button>
           </div>
 
-          <!-- TARGET TEMP -->
-          <div class="target">
-            ${targetTemp ?? '--'}°
-          </div>
+          <div class="target">${targetTemp ?? '--'}°</div>
 
         </div>
       </ha-card>
@@ -107,117 +166,6 @@ class CornerThermostatCard extends HTMLElement {
         fan_mode: newMode
       });
     };
-  }
-
-  static get styles() {
-    return `
-      ha-card {
-        height: 400px;
-        border-radius: 24px;
-        overflow: hidden;
-        background: radial-gradient(circle at center, #1a1a1a 0%, #0f0f0f 100%);
-        box-shadow:
-          inset 0 0 40px rgba(255,255,255,0.03),
-          0 10px 30px rgba(0,0,0,0.6);
-      }
-
-      .container {
-        position: relative;
-        height: 100%;
-        color: #eaeaea;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-      }
-
-      /* TEMPERATURE TEXT */
-      .current {
-        font-size: 72px;
-        font-weight: 600;
-        letter-spacing: 2px;
-      }
-
-      .target {
-        font-size: 34px;
-        opacity: 0.75;
-        margin-top: 18px;
-      }
-
-      /* BUTTONS */
-      .controls {
-        display: flex;
-        gap: 50px;
-        margin-top: 20px;
-      }
-
-      button {
-        width: 64px;
-        height: 64px;
-        border-radius: 50%;
-        border: none;
-        font-size: 30px;
-        color: white;
-        background: rgba(255,255,255,0.06);
-        backdrop-filter: blur(6px);
-        box-shadow:
-          inset 0 2px 4px rgba(255,255,255,0.05),
-          0 4px 10px rgba(0,0,0,0.5);
-        transition: all 0.2s ease;
-      }
-
-      button:active {
-        transform: scale(0.92);
-      }
-
-      /* CORNER ICONS */
-      .corner {
-        position: absolute;
-        font-size: 32px;
-        opacity: 0.45;
-        transition: all 0.25s ease;
-        cursor: pointer;
-      }
-
-      .corner.active {
-        opacity: 1;
-        transform: scale(1.1);
-      }
-
-      /* POSITIONS */
-      .power { top: 18px; left: 18px; }
-      .cool { top: 18px; right: 18px; }
-      .heat { bottom: 18px; left: 18px; }
-      .fan { bottom: 18px; right: 18px; }
-
-      /* GLOW STATES (ONLY WHEN ACTIVE) */
-      .cool.active {
-        color: #5ab0ff;
-        text-shadow:
-          0 0 6px rgba(90,176,255,0.6),
-          0 0 14px rgba(90,176,255,0.4);
-      }
-
-      .heat.active {
-        color: #ff6a5a;
-        text-shadow:
-          0 0 6px rgba(255,106,90,0.6),
-          0 0 14px rgba(255,106,90,0.4);
-      }
-
-      .fan.active {
-        color: #7dffb3;
-        text-shadow:
-          0 0 6px rgba(125,255,179,0.6),
-          0 0 14px rgba(125,255,179,0.4);
-      }
-
-      .power.active {
-        color: #ffffff;
-        text-shadow:
-          0 0 6px rgba(255,255,255,0.5);
-      }
-    `;
   }
 }
 
