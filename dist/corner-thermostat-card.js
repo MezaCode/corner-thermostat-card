@@ -60,16 +60,8 @@ class CornerThermostatCard extends HTMLElement {
             justify-content: center;
           }
 
-          .current {
-            font-size: 72px;
-            font-weight: 600;
-          }
-
-          .target {
-            font-size: 34px;
-            opacity: 0.75;
-            margin-top: 18px;
-          }
+          .current { font-size: 72px; font-weight: 600; }
+          .target { font-size: 34px; opacity: 0.75; margin-top: 18px; }
 
           .controls {
             display: flex;
@@ -108,40 +100,22 @@ class CornerThermostatCard extends HTMLElement {
           .heat { bottom: 18px; left: 18px; }
           .fan { bottom: 18px; right: 18px; }
 
-          .cool.active ha-icon {
-            color: ${c.cool_color};
-            filter: drop-shadow(0 0 6px ${c.cool_color});
-          }
-
-          .heat.active ha-icon {
-            color: ${c.heat_color};
-            filter: drop-shadow(0 0 6px ${c.heat_color});
-          }
-
-          .fan.active ha-icon {
-            color: ${c.fan_color};
-            filter: drop-shadow(0 0 6px ${c.fan_color});
-          }
-
-          .power.active ha-icon {
-            color: ${c.power_color};
-            filter: drop-shadow(0 0 6px ${c.power_color});
-          }
+          .cool.active ha-icon { color: ${c.cool_color}; }
+          .heat.active ha-icon { color: ${c.heat_color}; }
+          .fan.active ha-icon { color: ${c.fan_color}; }
+          .power.active ha-icon { color: ${c.power_color}; }
         </style>
 
         <div class="container">
           <div class="corner power ${hvacMode === 'off' ? 'active' : ''}" id="power">
             <ha-icon icon="mdi:power"></ha-icon>
           </div>
-
           <div class="corner cool ${hvacMode === 'cool' ? 'active' : ''}" id="cool">
             <ha-icon icon="mdi:snowflake"></ha-icon>
           </div>
-
           <div class="corner heat ${hvacMode === 'heat' ? 'active' : ''}" id="heat">
             <ha-icon icon="mdi:fire"></ha-icon>
           </div>
-
           <div class="corner fan ${fanMode === 'on' ? 'active' : ''}" id="fan">
             <ha-icon icon="mdi:fan"></ha-icon>
           </div>
@@ -182,139 +156,88 @@ class CornerThermostatCard extends HTMLElement {
         temperature: (stateObj.attributes.temperature ?? 0) - 1
       });
     };
-
-    this.querySelector("#cool").onclick = () => {
-      this._hass.callService("climate", "set_hvac_mode", {
-        entity_id: entity,
-        hvac_mode: "cool"
-      });
-    };
-
-    this.querySelector("#heat").onclick = () => {
-      this._hass.callService("climate", "set_hvac_mode", {
-        entity_id: entity,
-        hvac_mode: "heat"
-      });
-    };
-
-    this.querySelector("#power").onclick = () => {
-      this._hass.callService("climate", "set_hvac_mode", {
-        entity_id: entity,
-        hvac_mode: "off"
-      });
-    };
-
-    this.querySelector("#fan").onclick = () => {
-      const newMode =
-        stateObj.attributes.fan_mode === "on" ? "auto" : "on";
-
-      this._hass.callService("climate", "set_fan_mode", {
-        entity_id: entity,
-        fan_mode: newMode
-      });
-    };
   }
 }
 
 customElements.define("corner-thermostat-card", CornerThermostatCard);
 
+
 class CornerThermostatCardEditor extends HTMLElement {
   setConfig(config) {
-    this.config = config;
-    this._updatePreview();
-    this.render();
+    this.config = { ...config };
+    this._render();
   }
 
   set hass(hass) {
     this._hass = hass;
-    this._updatePreview();
-    this.render();
+    this._render();
   }
 
-  render() {
-    if (!this._hass) return;
+  _render() {
+    if (!this._hass || !this.config) return;
 
+    if (!this._initialized) {
+      this.innerHTML = `
+        <div style="display:flex; gap:20px;">
+          <div id="form" style="flex:1;"></div>
+          <div id="preview" style="flex:1;"></div>
+        </div>
+      `;
+      this._initialized = true;
+    }
+
+    this._renderForm();
+    this._updatePreview();
+  }
+
+  _renderForm() {
     const entities = Object.keys(this._hass.states)
       .filter(e => e.startsWith("climate."));
 
     const themes = this._hass.themes?.themes || {};
     const themeNames = Object.keys(themes);
 
-    this.innerHTML = `
-      <div style="display:flex; gap:20px;">
-        
-        <div style="flex:1; display:flex; flex-direction:column; gap:10px;">
+    this.querySelector("#form").innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <select id="entity">
+          ${entities.map(e => `<option value="${e}" ${this.config.entity === e ? "selected" : ""}>${e}</option>`).join("")}
+        </select>
 
-          <label>Climate Entity</label>
-          <select id="entity">
-            ${entities.map(e => `<option value="${e}" ${this.config.entity === e ? "selected" : ""}>${e}</option>`).join("")}
-          </select>
+        <select id="theme">
+          <option value="">None</option>
+          ${themeNames.map(t => `<option value="${t}" ${this.config.theme === t ? "selected" : ""}>${t}</option>`).join("")}
+        </select>
 
-          <label>Theme</label>
-          <select id="theme">
-            <option value="">None</option>
-            ${themeNames.map(name => `<option value="${name}" ${this.config.theme === name ? "selected" : ""}>${name}</option>`).join("")}
-          </select>
-
-          <label>Background Color</label>
-          <input type="color" id="bg_color" value="${this.config.bg_color || "#1a1a1a"}">
-
-          <label>Background Opacity</label>
-          <input type="range" min="0" max="1" step="0.05" id="bg_opacity" value="${this.config.bg_opacity ?? 1}">
-
-          <label>Cool Color</label>
-          <input type="color" id="cool_color" value="${this.config.cool_color || "#5ab0ff"}">
-
-          <label>Heat Color</label>
-          <input type="color" id="heat_color" value="${this.config.heat_color || "#ff6a5a"}">
-
-          <label>Fan Color</label>
-          <input type="color" id="fan_color" value="${this.config.fan_color || "#7dffb3"}">
-
-          <label>Power Color</label>
-          <input type="color" id="power_color" value="${this.config.power_color || "#ffffff"}">
-        </div>
-
-        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
-          <div id="preview"></div>
-        </div>
-
+        <input type="color" id="bg_color" value="${this.config.bg_color}">
+        <input type="range" min="0" max="1" step="0.05" id="bg_opacity" value="${this.config.bg_opacity}">
       </div>
     `;
 
-    this.querySelectorAll("input, select").forEach(el => {
-      el.addEventListener("change", () => {
-        this.config = {
-          ...this.config,
-          entity: this.querySelector("#entity").value,
-          theme: this.querySelector("#theme").value,
-          bg_color: this.querySelector("#bg_color").value,
-          bg_opacity: parseFloat(this.querySelector("#bg_opacity").value),
-          cool_color: this.querySelector("#cool_color").value,
-          heat_color: this.querySelector("#heat_color").value,
-          fan_color: this.querySelector("#fan_color").value,
-          power_color: this.querySelector("#power_color").value
-        };
-
-        this.dispatchEvent(new CustomEvent("config-changed", {
-          detail: { config: this.config },
-          bubbles: true,
-          composed: true
-        }));
-
-        this._updatePreview();
-      });
+    this.querySelectorAll("#form input, #form select").forEach(el => {
+      el.addEventListener("change", () => this._handleChange());
     });
+  }
+
+  _handleChange() {
+    this.config = {
+      ...this.config,
+      entity: this.querySelector("#entity").value,
+      theme: this.querySelector("#theme").value,
+      bg_color: this.querySelector("#bg_color").value,
+      bg_opacity: parseFloat(this.querySelector("#bg_opacity").value)
+    };
+
+    this.dispatchEvent(new CustomEvent("config-changed", {
+      detail: { config: this.config },
+      bubbles: true,
+      composed: true
+    }));
 
     this._updatePreview();
   }
 
   _updatePreview() {
-    if (!this._hass || !this.config) return;
-
     const preview = this.querySelector("#preview");
-    if (!preview) return;
-
     preview.innerHTML = "";
 
     const card = document.createElement("corner-thermostat-card");
@@ -327,9 +250,10 @@ class CornerThermostatCardEditor extends HTMLElement {
 
 customElements.define("corner-thermostat-card-editor", CornerThermostatCardEditor);
 
+
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: "corner-thermostat-card",
   name: "Corner Thermostat Card",
-  description: "Custom thermostat with live preview + theme support"
+  description: "Thermostat with live preview + working editor"
 });
