@@ -1,15 +1,11 @@
 class CornerThermostatCard extends HTMLElement {
   setConfig(config) {
     this.config = {
-      bg_color: "#1a1a1a",
-      bg_opacity: 1,
-      cool_color: "#5ab0ff",
-      heat_color: "#ff6a5a",
-      fan_color: "#7dffb3",
-      power_color: "#ffffff",
-      theme: "",
+      entity: "",
       width: "100%",
       height: "100%",
+      bg_color: "#1a1a1a",
+      bg_opacity: 1,
       ...config
     };
   }
@@ -36,176 +32,41 @@ class CornerThermostatCard extends HTMLElement {
     const stateObj = this._hass.states[this.config.entity];
     if (!stateObj) return;
 
-    const c = this.config;
-
-    const currentTemp = stateObj.attributes.current_temperature;
-    const targetTemp = stateObj.attributes.temperature;
-    const hvacMode = stateObj.state;
-    const fanMode = stateObj.attributes.fan_mode;
+    const currentTemp = stateObj.attributes.current_temperature ?? "--";
+    const targetTemp = stateObj.attributes.temperature ?? "--";
 
     this.innerHTML = `
-      <ha-card ${c.theme ? `data-theme="${c.theme}"` : ""}
-        style="width:${c.width}; height:${c.height};">
-        <style>
-          :host {
-            display: block;
-            width: 100%;
-            height: 100%;
-          }
-
-          ha-card {
-            overflow: hidden;
-          }
-
-          .container {
-            width: 100%;
-            height: 100%;
-            background: rgba(${this._hexToRgb(c.bg_color)}, ${c.bg_opacity});
-            border-radius: 1.5em;
-            color: var(--primary-text-color, #eaeaea);
-
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-
-            padding: 8%;
-
-            font-size: clamp(8px, 1.8em, 18px);
-          }
-
-          .top, .bottom {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-          }
-
-          .center {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex-grow: 1;
-          }
-
-          .current {
-            font-size: 2.8em;
-            font-weight: 600;
-          }
-
-          .target {
-            font-size: 1.2em;
-            opacity: 0.75;
-            margin-top: 0.5em;
-          }
-
-          .controls {
-            display: flex;
-            gap: 1.5em;
-            margin-top: 0.8em;
-          }
-
-          button {
-            width: 2.6em;
-            height: 2.6em;
-            border-radius: 50%;
-            border: none;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            font-size: 1.4em;
-
-            background: rgba(255,255,255,0.08);
-            color: var(--primary-text-color);
-
-            box-shadow:
-              inset 0 0.08em 0.18em rgba(255,255,255,0.08),
-              0 0.25em 0.6em rgba(0,0,0,0.5);
-          }
-
-          .corner ha-icon {
-            width: 2em;
-            height: 2em;
-          }
-
-          .corner.active {
-            transform: scale(1.2);
-          }
-
-          .cool.active ha-icon {
-            color: ${c.cool_color};
-          }
-
-          .heat.active ha-icon {
-            color: ${c.heat_color};
-          }
-
-          .fan.active ha-icon {
-            color: ${c.fan_color};
-          }
-
-          .power.active ha-icon {
-            color: ${c.power_color};
-          }
-        </style>
-
-        <div class="container">
-          <div class="top">
-            <div class="corner power ${hvacMode === 'off' ? 'active' : ''}" id="power">
-              <ha-icon icon="mdi:power"></ha-icon>
-            </div>
-            <div class="corner cool ${hvacMode === 'cool' ? 'active' : ''}" id="cool">
-              <ha-icon icon="mdi:snowflake"></ha-icon>
-            </div>
+      <ha-card style="width:${this.config.width}; height:${this.config.height};">
+        <div style="
+          width:100%;
+          height:100%;
+          display:flex;
+          flex-direction:column;
+          align-items:center;
+          justify-content:center;
+          font-size:1.2em;
+        ">
+          <div style="font-size:2em;">${currentTemp}°</div>
+          <div style="display:flex; gap:10px; margin:10px;">
+            <button id="minus">−</button>
+            <button id="plus">+</button>
           </div>
-
-          <div class="center">
-            <div class="current">${currentTemp ?? '--'}°</div>
-
-            <div class="controls">
-              <button id="minus">−</button>
-              <button id="plus">+</button>
-            </div>
-
-            <div class="target">${targetTemp ?? '--'}°</div>
-          </div>
-
-          <div class="bottom">
-            <div class="corner heat ${hvacMode === 'heat' ? 'active' : ''}" id="heat">
-              <ha-icon icon="mdi:fire"></ha-icon>
-            </div>
-            <div class="corner fan ${fanMode === 'on' ? 'active' : ''}" id="fan">
-              <ha-icon icon="mdi:fan"></ha-icon>
-            </div>
-          </div>
+          <div>${targetTemp}°</div>
         </div>
       </ha-card>
     `;
 
-    this._bindActions(stateObj);
-  }
-
-  _hexToRgb(hex) {
-    const bigint = parseInt(hex.replace("#", ""), 16);
-    return `${(bigint >> 16) & 255}, ${(bigint >> 8) & 255}, ${bigint & 255}`;
-  }
-
-  _bindActions(stateObj) {
-    const entity = this.config.entity;
-
     this.querySelector("#plus").onclick = () => {
       this._hass.callService("climate", "set_temperature", {
-        entity_id: entity,
-        temperature: (stateObj.attributes.temperature ?? 0) + 1
+        entity_id: this.config.entity,
+        temperature: targetTemp + 1
       });
     };
 
     this.querySelector("#minus").onclick = () => {
       this._hass.callService("climate", "set_temperature", {
-        entity_id: entity,
-        temperature: (stateObj.attributes.temperature ?? 0) - 1
+        entity_id: this.config.entity,
+        temperature: targetTemp - 1
       });
     };
   }
@@ -216,13 +77,8 @@ customElements.define("corner-thermostat-card", CornerThermostatCard);
 
 
 class CornerThermostatCardEditor extends HTMLElement {
-  constructor() {
-    super();
-    this.config = {};
-  }
-
   setConfig(config) {
-    this.config = { ...config };
+    this.config = config || {};
     this._render();
   }
 
@@ -232,18 +88,23 @@ class CornerThermostatCardEditor extends HTMLElement {
   }
 
   _render() {
-    if (!this._hass) return;
+    if (!this._hass || !this.config) return;
 
-    const entities = Object.keys(this._hass.states)
+    const entities = Object.keys(this._hass.states || {})
       .filter(e => e.startsWith("climate."));
 
     this.innerHTML = `
-      <div style="display:flex; gap:20px;">
+      <div style="display:flex; gap:16px;">
         
-        <div style="flex:1; display:flex; flex-direction:column; gap:10px;">
+        <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
+          
           <label>Entity</label>
           <select id="entity">
-            ${entities.map(e => `<option value="${e}" ${this.config.entity === e ? "selected" : ""}>${e}</option>`).join("")}
+            ${entities.map(e => `
+              <option value="${e}" ${this.config.entity === e ? "selected" : ""}>
+                ${e}
+              </option>
+            `).join("")}
           </select>
 
           <label>Width</label>
@@ -251,29 +112,35 @@ class CornerThermostatCardEditor extends HTMLElement {
 
           <label>Height</label>
           <input id="height" value="${this.config.height || "100%"}">
+
         </div>
 
-        <div style="flex:1;" id="preview"></div>
+        <div id="preview" style="flex:1;"></div>
+
       </div>
     `;
 
     this.querySelectorAll("input, select").forEach(el => {
-      el.addEventListener("change", () => this._handleChange());
+      el.addEventListener("change", () => this._valueChanged());
     });
 
     this._updatePreview();
   }
 
-  _handleChange() {
-    this.config = {
+  _valueChanged() {
+    if (!this._hass) return;
+
+    const newConfig = {
       ...this.config,
-      entity: this.querySelector("#entity").value,
-      width: this.querySelector("#width").value,
-      height: this.querySelector("#height").value
+      entity: this.querySelector("#entity")?.value,
+      width: this.querySelector("#width")?.value,
+      height: this.querySelector("#height")?.value
     };
 
+    this.config = newConfig;
+
     this.dispatchEvent(new CustomEvent("config-changed", {
-      detail: { config: this.config },
+      detail: { config: newConfig },
       bubbles: true,
       composed: true
     }));
@@ -283,6 +150,8 @@ class CornerThermostatCardEditor extends HTMLElement {
 
   _updatePreview() {
     const preview = this.querySelector("#preview");
+    if (!preview || !this._hass || !this.config.entity) return;
+
     preview.innerHTML = "";
 
     const card = document.createElement("corner-thermostat-card");
@@ -300,5 +169,5 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "corner-thermostat-card",
   name: "Corner Thermostat Card",
-  description: "Thermostat with full size control"
+  description: "Thermostat with size control + working editor"
 });
