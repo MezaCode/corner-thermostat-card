@@ -26,7 +26,7 @@ class CornerThermostatCard extends HTMLElement {
   }
 
   _render() {
-    if (!this._hass) return;
+    if (!this._hass || !this.config) return;
 
     const stateObj = this._hass.states[this.config.entity];
     if (!stateObj) return;
@@ -57,6 +57,7 @@ class CornerThermostatCard extends HTMLElement {
 
           .temp-container {
             text-align: center;
+            z-index: 2;
           }
 
           .current {
@@ -69,71 +70,94 @@ class CornerThermostatCard extends HTMLElement {
             opacity: 0.7;
           }
 
+          /* CONTROLS (FIXED POSITION + SIZE) */
           .controls {
             position: absolute;
             top: 50%;
             width: 100%;
             display: flex;
-            justify-content: space-between;
-            padding: 0 25%;
+            justify-content: center;
+            gap: 60px;
             transform: translateY(-50%);
+            z-index: 2;
           }
 
           button {
-            width: 44px;
-            height: 44px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             border: none;
             background: rgba(255,255,255,0.08);
-            font-size: 22px;
+            font-size: 18px;
             color: white;
           }
 
+          /* CORNER ICONS */
           .corner {
             position: absolute;
-          }
-
-          .corner ha-icon {
-            width: 26px;
-            height: 26px;
+            z-index: 1;
           }
 
           .circle {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 48px;
-            height: 48px;
+            width: 110px;
+            height: 110px;
             border-radius: 50%;
+            transform: translate(-35%, -35%);
+            opacity: 0;
+            transition: 0.3s;
           }
 
-          .power { top: 16px; left: 16px; }
-          .cool { top: 16px; right: 16px; }
-          .heat { bottom: 16px; left: 16px; }
-          .fan { bottom: 16px; right: 16px; }
+          .corner.active .circle {
+            opacity: 0.25;
+          }
 
-          .active.cool .circle { border: 2px solid ${this.config.cool_color}; }
-          .active.heat .circle { border: 2px solid ${this.config.heat_color}; }
-          .active.fan .circle { border: 2px solid ${this.config.fan_color}; }
-          .active.power .circle { border: 2px solid ${this.config.power_color}; }
+          .corner ha-icon {
+            position: absolute;
+            width: 26px;
+            height: 26px;
+          }
+
+          /* POSITIONING */
+          .power { top: 0; left: 0; }
+          .cool { top: 0; right: 0; }
+          .heat { bottom: 0; left: 0; }
+          .fan { bottom: 0; right: 0; }
+
+          .power ha-icon { top: 16px; left: 16px; }
+          .cool ha-icon { top: 16px; right: 16px; }
+          .heat ha-icon { bottom: 16px; left: 16px; }
+          .fan ha-icon { bottom: 16px; right: 16px; }
+
+          /* FILLED COLORS */
+          .cool .circle { background: ${this.config.cool_color}; }
+          .heat .circle { background: ${this.config.heat_color}; }
+          .fan .circle { background: ${this.config.fan_color}; }
+          .power .circle { background: ${this.config.power_color}; }
         </style>
 
         <div class="wrap">
 
           <div class="corner power ${hvac === 'off' ? 'active' : ''}" id="power">
-            <div class="circle"><ha-icon icon="mdi:power"></ha-icon></div>
+            <div class="circle"></div>
+            <ha-icon icon="mdi:power"></ha-icon>
           </div>
 
           <div class="corner cool ${hvac === 'cool' ? 'active' : ''}" id="cool">
-            <div class="circle"><ha-icon icon="mdi:snowflake"></ha-icon></div>
+            <div class="circle"></div>
+            <ha-icon icon="mdi:snowflake"></ha-icon>
           </div>
 
           <div class="corner heat ${hvac === 'heat' ? 'active' : ''}" id="heat">
-            <div class="circle"><ha-icon icon="mdi:fire"></ha-icon></div>
+            <div class="circle"></div>
+            <ha-icon icon="mdi:fire"></ha-icon>
           </div>
 
           <div class="corner fan ${fan === 'on' ? 'active' : ''}" id="fan">
-            <div class="circle"><ha-icon icon="mdi:fan"></ha-icon></div>
+            <div class="circle"></div>
+            <ha-icon icon="mdi:fan"></ha-icon>
           </div>
 
           <div class="temp-container">
@@ -200,7 +224,7 @@ customElements.define("corner-thermostat-card", CornerThermostatCard);
 
 class CornerThermostatEditor extends HTMLElement {
   setConfig(config) {
-    this.config = config;
+    this.config = config || {};
   }
 
   set hass(hass) {
@@ -211,27 +235,29 @@ class CornerThermostatEditor extends HTMLElement {
   _render() {
     if (!this._hass) return;
 
+    const config = this.config || {};
+
     const entities = Object.keys(this._hass.states)
       .filter(e => e.startsWith("climate."));
 
     this.innerHTML = `
-      <div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
         <label>Entity</label>
         <select id="entity">
-          ${entities.map(e => `<option value="${e}" ${this.config.entity===e?"selected":""}>${e}</option>`).join("")}
+          ${entities.map(e => `<option value="${e}" ${config.entity===e?"selected":""}>${e}</option>`).join("")}
         </select>
 
         <label>Cool Color</label>
-        <input type="color" id="cool" value="${this.config.cool_color || "#5ab0ff"}">
+        <input type="color" id="cool" value="${config.cool_color || "#5ab0ff"}">
 
         <label>Heat Color</label>
-        <input type="color" id="heat" value="${this.config.heat_color || "#ff6a5a"}">
+        <input type="color" id="heat" value="${config.heat_color || "#ff6a5a"}">
 
         <label>Fan Color</label>
-        <input type="color" id="fan" value="${this.config.fan_color || "#7dffb3"}">
+        <input type="color" id="fan" value="${config.fan_color || "#7dffb3"}">
 
         <label>Power Color</label>
-        <input type="color" id="power" value="${this.config.power_color || "#ffffff"}">
+        <input type="color" id="power" value="${config.power_color || "#ffffff"}">
       </div>
     `;
 
