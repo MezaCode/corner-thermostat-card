@@ -68,12 +68,11 @@ class CornerThermostatCard extends HTMLElement {
 
             padding: 8%;
 
-            /* dynamic scaling */
-            font-size: clamp(10px, 2.5vw, 22px);
+            /* KEY FIX: scale based on container */
+            font-size: clamp(8px, 1.8em, 18px);
           }
 
-          .top,
-          .bottom {
+          .top, .bottom {
             width: 100%;
             display: flex;
             justify-content: space-between;
@@ -88,25 +87,28 @@ class CornerThermostatCard extends HTMLElement {
           }
 
           .current {
-            font-size: 3em;
+            font-size: 2.8em;
             font-weight: 600;
           }
 
           .target {
-            font-size: 1.3em;
+            font-size: 1.2em;
             opacity: 0.75;
             margin-top: 0.5em;
           }
 
           .controls {
             display: flex;
-            gap: 2em;
-            margin-top: 1em;
+            gap: 1.5em;
+            margin-top: 0.8em;
           }
 
           button {
-            width: 3em;
-            height: 3em;
+            width: 2.6em;
+            height: 2.6em;
+            min-width: 0;
+            min-height: 0;
+
             border-radius: 50%;
             border: none;
 
@@ -114,17 +116,17 @@ class CornerThermostatCard extends HTMLElement {
             align-items: center;
             justify-content: center;
 
-            font-size: 1.6em;
+            font-size: 1.4em;
             line-height: 1;
 
             background: rgba(255,255,255,0.08);
             color: var(--primary-text-color);
 
             box-shadow:
-              inset 0 0.1em 0.2em rgba(255,255,255,0.08),
-              0 0.3em 0.8em rgba(0,0,0,0.5);
+              inset 0 0.08em 0.18em rgba(255,255,255,0.08),
+              0 0.25em 0.6em rgba(0,0,0,0.5);
 
-            backdrop-filter: blur(0.3em);
+            backdrop-filter: blur(0.25em);
 
             transition: all 0.15s ease;
           }
@@ -140,8 +142,8 @@ class CornerThermostatCard extends HTMLElement {
           }
 
           .corner ha-icon {
-            width: 2.4em;
-            height: 2.4em;
+            width: 2em;
+            height: 2em;
           }
 
           .corner.active {
