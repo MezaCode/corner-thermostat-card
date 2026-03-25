@@ -49,13 +49,15 @@ class CornerThermostatCard extends HTMLElement {
             position: relative;
             width: 100%;
             height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             color: white;
           }
 
+          /* CENTER TEMPS */
           .temp-container {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             text-align: center;
             z-index: 2;
           }
@@ -63,28 +65,29 @@ class CornerThermostatCard extends HTMLElement {
           .current {
             font-size: 42px;
             font-weight: 600;
+            margin-bottom: 8px;
           }
 
           .target {
             font-size: 20px;
             opacity: 0.7;
+            margin-top: 8px;
           }
 
-          /* CONTROLS (FIXED POSITION + SIZE) */
+          /* CONTROLS */
           .controls {
             position: absolute;
             top: 50%;
-            width: 100%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             display: flex;
-            justify-content: center;
-            gap: 60px;
-            transform: translateY(-50%);
+            gap: 50px;
             z-index: 2;
           }
 
           button {
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
             border: none;
             background: rgba(255,255,255,0.08);
@@ -92,20 +95,18 @@ class CornerThermostatCard extends HTMLElement {
             color: white;
           }
 
-          /* CORNER ICONS */
+          /* CORNERS */
           .corner {
             position: absolute;
-            z-index: 1;
+            width: 80px;
+            height: 80px;
+            overflow: visible;
           }
 
-          .circle {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 110px;
-            height: 110px;
+          .corner .circle {
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
-            transform: translate(-35%, -35%);
             opacity: 0;
             transition: 0.3s;
           }
@@ -118,24 +119,24 @@ class CornerThermostatCard extends HTMLElement {
             position: absolute;
             width: 26px;
             height: 26px;
+            z-index: 2;
           }
 
-          /* POSITIONING */
+          /* POSITION CORRECTLY */
           .power { top: 0; left: 0; }
           .cool { top: 0; right: 0; }
           .heat { bottom: 0; left: 0; }
           .fan { bottom: 0; right: 0; }
 
+          .power .circle { transform: translate(-40%, -40%); background: ${this.config.power_color}; }
+          .cool .circle { transform: translate(40%, -40%); background: ${this.config.cool_color}; }
+          .heat .circle { transform: translate(-40%, 40%); background: ${this.config.heat_color}; }
+          .fan .circle { transform: translate(40%, 40%); background: ${this.config.fan_color}; }
+
           .power ha-icon { top: 16px; left: 16px; }
           .cool ha-icon { top: 16px; right: 16px; }
           .heat ha-icon { bottom: 16px; left: 16px; }
           .fan ha-icon { bottom: 16px; right: 16px; }
-
-          /* FILLED COLORS */
-          .cool .circle { background: ${this.config.cool_color}; }
-          .heat .circle { background: ${this.config.heat_color}; }
-          .fan .circle { background: ${this.config.fan_color}; }
-          .power .circle { background: ${this.config.power_color}; }
         </style>
 
         <div class="wrap">
@@ -235,31 +236,37 @@ class CornerThermostatEditor extends HTMLElement {
   _render() {
     if (!this._hass) return;
 
-    const config = this.config || {};
-
     const entities = Object.keys(this._hass.states)
       .filter(e => e.startsWith("climate."));
 
     this.innerHTML = `
-      <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="display:flex; flex-direction:column; gap:10px; min-height:300px;">
         <label>Entity</label>
         <select id="entity">
-          ${entities.map(e => `<option value="${e}" ${config.entity===e?"selected":""}>${e}</option>`).join("")}
+          ${entities.map(e => `<option value="${e}" ${this.config.entity===e?"selected":""}>${e}</option>`).join("")}
         </select>
 
         <label>Cool Color</label>
-        <input type="color" id="cool" value="${config.cool_color || "#5ab0ff"}">
+        <input type="color" id="cool" value="${this.config.cool_color || "#5ab0ff"}">
 
         <label>Heat Color</label>
-        <input type="color" id="heat" value="${config.heat_color || "#ff6a5a"}">
+        <input type="color" id="heat" value="${this.config.heat_color || "#ff6a5a"}">
 
         <label>Fan Color</label>
-        <input type="color" id="fan" value="${config.fan_color || "#7dffb3"}">
+        <input type="color" id="fan" value="${this.config.fan_color || "#7dffb3"}">
 
         <label>Power Color</label>
-        <input type="color" id="power" value="${config.power_color || "#ffffff"}">
+        <input type="color" id="power" value="${this.config.power_color || "#ffffff"}">
+
+        <div style="height:180px; margin-top:10px;">
+          <corner-thermostat-card id="preview"></corner-thermostat-card>
+        </div>
       </div>
     `;
+
+    const preview = this.querySelector("#preview");
+    preview.setConfig(this.config);
+    preview.hass = this._hass;
 
     this.querySelectorAll("input, select").forEach(el => {
       el.addEventListener("change", () => this._update());
@@ -268,6 +275,7 @@ class CornerThermostatEditor extends HTMLElement {
 
   _update() {
     const config = {
+      ...this.config,
       entity: this.querySelector("#entity").value,
       cool_color: this.querySelector("#cool").value,
       heat_color: this.querySelector("#heat").value,
