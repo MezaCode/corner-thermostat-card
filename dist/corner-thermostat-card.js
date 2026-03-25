@@ -69,10 +69,14 @@ class CornerThermostatCard extends HTMLElement {
             margin-bottom: 14px;
           }
 
+          /* 🔥 FIX #2 — ONLY target temp moved down */
           .target {
+            position: absolute;
+            top: 68%;
+            left: 50%;
+            transform: translateX(-50%);
             font-size: 20px;
             opacity: 0.7;
-            margin-top: 14px;
           }
 
           /* CONTROLS */
@@ -96,18 +100,19 @@ class CornerThermostatCard extends HTMLElement {
             color: white;
           }
 
-          /* CORNERS */
+          /* 🔥 FIX #1 — unified corner system (matches power for ALL) */
           .corner {
             position: absolute;
-            width: 100px;
-            height: 100px;
-            overflow: visible;
+            width: 0;
+            height: 0;
           }
 
           .corner .circle {
+            position: absolute;
             width: 140px;
             height: 140px;
             border-radius: 50%;
+            transform: translate(-50%, -50%);
             opacity: 0;
             transition: 0.3s;
           }
@@ -120,26 +125,26 @@ class CornerThermostatCard extends HTMLElement {
             position: absolute;
             width: 26px;
             height: 26px;
-            z-index: 2;
+            transform: translate(-50%, -50%);
           }
 
-          /* POSITION */
-          .power { top: 0; left: 0; }
-          .cool { top: 0; right: 0; }
-          .heat { bottom: 0; left: 0; }
-          .fan { bottom: 0; right: 0; }
+          /* IDENTICAL POSITION LOGIC FOR ALL CORNERS */
+          .power { top: 18px; left: 18px; }
+          .cool  { top: 18px; right: 18px; }
+          .heat  { bottom: 18px; left: 18px; }
+          .fan   { bottom: 18px; right: 18px; }
 
-          /* MATCHED OFFSET (ALL SAME STYLE AS POWER) */
-          .power .circle { transform: translate(-30%, -30%); background: ${this.config.power_color}; }
-          .cool .circle { transform: translate(30%, -30%); background: ${this.config.cool_color}; }
-          .heat .circle { transform: translate(-30%, 30%); background: ${this.config.heat_color}; }
-          .fan .circle { transform: translate(30%, 30%); background: ${this.config.fan_color}; }
+          /* ICON ANCHORING */
+          .power ha-icon { top: 0; left: 0; }
+          .cool  ha-icon { top: 0; right: 0; }
+          .heat  ha-icon { bottom: 0; left: 0; }
+          .fan   ha-icon { bottom: 0; right: 0; }
 
-          /* ICON POSITIONS */
-          .power ha-icon { top: 18px; left: 18px; }
-          .cool ha-icon { top: 18px; right: 18px; }
-          .heat ha-icon { bottom: 18px; left: 18px; }
-          .fan ha-icon { bottom: 18px; right: 18px; }
+          /* COLORS */
+          .power .circle { background: ${this.config.power_color}; }
+          .cool  .circle { background: ${this.config.cool_color}; }
+          .heat  .circle { background: ${this.config.heat_color}; }
+          .fan   .circle { background: ${this.config.fan_color}; }
         </style>
 
         <div class="wrap">
@@ -166,8 +171,9 @@ class CornerThermostatCard extends HTMLElement {
 
           <div class="temp-container">
             <div class="current">${current}°</div>
-            <div class="target">${target}°</div>
           </div>
+
+          <div class="target">${target}°</div>
 
           <div class="controls">
             <button id="minus">−</button>
