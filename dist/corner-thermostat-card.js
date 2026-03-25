@@ -46,20 +46,45 @@ class CornerThermostatCard extends HTMLElement {
         <style>
           :host {
             display: block;
+            height: 100%;
+          }
+
+          ha-card {
+            height: 100%;
           }
 
           .container {
             position: relative;
             width: 100%;
-            aspect-ratio: 1 / 1;
+            height: 100%;
             background: rgba(${this._hexToRgb(c.bg_color)}, ${c.bg_opacity});
             border-radius: 1.5em;
             color: var(--primary-text-color, #eaeaea);
+
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+
+            padding: 8%;
+
+            /* dynamic scaling */
+            font-size: clamp(10px, 2.5vw, 22px);
+          }
+
+          .top,
+          .bottom {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+          }
+
+          .center {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: min(4vw, 18px);
+            flex-grow: 1;
           }
 
           .current {
@@ -68,9 +93,9 @@ class CornerThermostatCard extends HTMLElement {
           }
 
           .target {
-            font-size: 1.4em;
+            font-size: 1.3em;
             opacity: 0.75;
-            margin-top: 0.6em;
+            margin-top: 0.5em;
           }
 
           .controls {
@@ -84,35 +109,45 @@ class CornerThermostatCard extends HTMLElement {
             height: 3em;
             border-radius: 50%;
             border: none;
-            font-size: 1.5em;
-            color: var(--primary-text-color);
-            background: rgba(255,255,255,0.08);
+
             display: flex;
             align-items: center;
             justify-content: center;
+
+            font-size: 1.6em;
+            line-height: 1;
+
+            background: rgba(255,255,255,0.08);
+            color: var(--primary-text-color);
+
+            box-shadow:
+              inset 0 0.1em 0.2em rgba(255,255,255,0.08),
+              0 0.3em 0.8em rgba(0,0,0,0.5);
+
+            backdrop-filter: blur(0.3em);
+
+            transition: all 0.15s ease;
+          }
+
+          button:active {
+            transform: scale(0.9);
           }
 
           .corner {
-            position: absolute;
             opacity: 0.5;
             cursor: pointer;
             transition: all 0.25s ease;
           }
 
           .corner ha-icon {
-            width: 2.2em;
-            height: 2.2em;
+            width: 2.4em;
+            height: 2.4em;
           }
 
           .corner.active {
             opacity: 1;
             transform: scale(1.2);
           }
-
-          .power { top: 5%; left: 5%; }
-          .cool { top: 5%; right: 5%; }
-          .heat { bottom: 5%; left: 5%; }
-          .fan { bottom: 5%; right: 5%; }
 
           .cool.active ha-icon {
             color: ${c.cool_color};
@@ -136,30 +171,38 @@ class CornerThermostatCard extends HTMLElement {
         </style>
 
         <div class="container">
-          <div class="corner power ${hvacMode === 'off' ? 'active' : ''}" id="power">
-            <ha-icon icon="mdi:power"></ha-icon>
+          
+          <div class="top">
+            <div class="corner power ${hvacMode === 'off' ? 'active' : ''}" id="power">
+              <ha-icon icon="mdi:power"></ha-icon>
+            </div>
+
+            <div class="corner cool ${hvacMode === 'cool' ? 'active' : ''}" id="cool">
+              <ha-icon icon="mdi:snowflake"></ha-icon>
+            </div>
           </div>
 
-          <div class="corner cool ${hvacMode === 'cool' ? 'active' : ''}" id="cool">
-            <ha-icon icon="mdi:snowflake"></ha-icon>
+          <div class="center">
+            <div class="current">${currentTemp ?? '--'}°</div>
+
+            <div class="controls">
+              <button id="minus">−</button>
+              <button id="plus">+</button>
+            </div>
+
+            <div class="target">${targetTemp ?? '--'}°</div>
           </div>
 
-          <div class="corner heat ${hvacMode === 'heat' ? 'active' : ''}" id="heat">
-            <ha-icon icon="mdi:fire"></ha-icon>
+          <div class="bottom">
+            <div class="corner heat ${hvacMode === 'heat' ? 'active' : ''}" id="heat">
+              <ha-icon icon="mdi:fire"></ha-icon>
+            </div>
+
+            <div class="corner fan ${fanMode === 'on' ? 'active' : ''}" id="fan">
+              <ha-icon icon="mdi:fan"></ha-icon>
+            </div>
           </div>
 
-          <div class="corner fan ${fanMode === 'on' ? 'active' : ''}" id="fan">
-            <ha-icon icon="mdi:fan"></ha-icon>
-          </div>
-
-          <div class="current">${currentTemp ?? '--'}°</div>
-
-          <div class="controls">
-            <button id="minus">–</button>
-            <button id="plus">+</button>
-          </div>
-
-          <div class="target">${targetTemp ?? '--'}°</div>
         </div>
       </ha-card>
     `;
