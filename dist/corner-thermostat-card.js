@@ -65,7 +65,7 @@ class CornerThermostatCard extends HTMLElement {
 
           .current {
             position: absolute;
-            top: 0%;           
+            top: 10%;           
             left: 50%;
             transform: translate(-50%, -50%);
             font-size: 42px;
@@ -75,7 +75,7 @@ class CornerThermostatCard extends HTMLElement {
           /* 🔥 FIX #2 — ONLY target temp moved down */
           .target {
             position: absolute;
-            top: 90%;
+            top: 70%;
             left: 50%;
             transform: translateX(-50%);
             font-size: 20px;
