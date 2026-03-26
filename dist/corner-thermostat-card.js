@@ -66,7 +66,7 @@ class CornerThermostatCard extends HTMLElement {
           .current {
             font-size: 42px;
             font-weight: 600;
-            margin-bottom: 14px;
+            margin-bottom: 30px;
           }
 
           /* 🔥 FIX #2 — ONLY target temp moved down */
@@ -130,15 +130,15 @@ class CornerThermostatCard extends HTMLElement {
 
           /* IDENTICAL POSITION LOGIC FOR ALL CORNERS */
           .power { top: 18px; left: 18px; }
-          .cool  { top: 18px; right: 0px; }
-          .heat  { bottom: 0px; left: 18px; }
-          .fan   { bottom: 0px; right: 0px; }
+          .cool  { top: 18px; right: 18px; }
+          .heat  { bottom: 18px; left: 18px; }
+          .fan   { bottom: 18px; right: 18px; }
 
           /* ICON ANCHORING */
           .power ha-icon { top: 0; left: 0; }
-          .cool  ha-icon { top: 0; right: 0; }
+          .cool  ha-icon { top: 0; right: -18; }
           .heat  ha-icon { bottom: -18; left: 0; }
-          .fan   ha-icon { bottom: -18; right: 0; }
+          .fan   ha-icon { bottom: -18; right: -18; }
 
           /* COLORS */
           .power .circle { background: ${this.config.power_color}; }
