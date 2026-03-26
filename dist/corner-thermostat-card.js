@@ -64,9 +64,12 @@ class CornerThermostatCard extends HTMLElement {
           }
 
           .current {
+            position: absolute;
+            top: 30%;           
+            left: 50%;
+            transform: translate(-50%, -50%);
             font-size: 42px;
             font-weight: 600;
-            margin-bottom: 30px;
           }
 
           /* 🔥 FIX #2 — ONLY target temp moved down */
