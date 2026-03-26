@@ -130,9 +130,9 @@ class CornerThermostatCard extends HTMLElement {
 
           /* IDENTICAL POSITION LOGIC FOR ALL CORNERS */
           .power { top: 18px; left: 18px; }
-          .cool  { top: 18px; right: 18px; }
-          .heat  { bottom: 18px; left: 18px; }
-          .fan   { bottom: 18px; right: 18px; }
+          .cool  { top: 18px; right: 0px; }
+          .heat  { bottom: 0px; left: 18px; }
+          .fan   { bottom: 0px; right: 0px; }
 
           /* ICON ANCHORING */
           .power ha-icon { top: 0; left: 0; }
