@@ -65,7 +65,7 @@ class CornerThermostatCard extends HTMLElement {
 
           .current {
             position: absolute;
-            top: 25%;           
+            top: 0%;           
             left: 50%;
             transform: translate(-50%, -50%);
             font-size: 42px;
